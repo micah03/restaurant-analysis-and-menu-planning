@@ -1,0 +1,268 @@
+---
+title: "DSR_Assignment_2_021_022_023"
+author: "021, 022, 023"
+date: "2024-05-13"
+output: 
+  html_document:
+    warning: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reading the Dataset
+
+```{r read}
+df <- read.csv("/Users/mayukhamohan/Desktop/MINOR_PROJECT_SEM_6/restaurants_with_top_5_dishes.csv")
+str(df)
+
+summary(df$Average_Cost_for_two)
+summary(df$Aggregate_rating)
+summary(df$Votes)
+
+```
+
+## Histograms
+
+```{r hist_Average_Cost_for_two, echo=TRUE}
+# Histogram for Average_Cost_for_two
+hist(df$Average_Cost_for_two, main="Distribution of Average Cost for Two", xlab="Average Cost")
+
+```
+
+```{r hist_Aggregate_rating, echo=TRUE}
+# Histogram for Aggregate_rating
+hist(df$Aggregate_rating, main="Distribution of Aggregate Ratings", xlab="Aggregate Rating")
+
+```
+
+## Bar Plot
+
+```{r bar_Has_Table_booking, echo=TRUE}
+
+# Bar plot for Has_Table_booking
+library(plotly)
+
+# Create a bar plot using plotly
+table_booking_counts <- table(df$Has_Table_booking)
+bar_plot <- plot_ly(x = names(table_booking_counts), y = table_booking_counts, type = "bar",
+                    marker = list(color = "skyblue"), 
+                    text = paste("Count: ", table_booking_counts),
+                    hoverinfo = "text") %>%
+  layout(title = "Counts of Table Booking", xaxis = list(title = "Table Booking"), yaxis = list(title = "Count"))
+
+# Show plot
+bar_plot
+
+```
+
+```{r bar_Has_Online_delivery, echo=TRUE}
+# Bar plot for Has_Online_delivery
+library(plotly)
+
+# Create a bar plot using plotly
+online_delivery_counts <- table(df$Has_Online_delivery)
+bar_plot <- plot_ly(x = names(online_delivery_counts), y = online_delivery_counts, type = "bar",
+                    marker = list(color = "lightgreen"), 
+                    text = paste("Count: ", online_delivery_counts),
+                    hoverinfo = "text") %>%
+  layout(title = "Counts of Online Delivery", xaxis = list(title = "Online Delivery"), yaxis = list(title = "Count"))
+
+# Show plot
+bar_plot
+
+
+
+```
+
+```{r bar_Is_delivering_now, echo=TRUE}
+# Bar plot for Is_delivering_now
+library(plotly)
+
+# Create a bar plot using plotly
+delivery_counts <- table(df$Is_delivering_now)
+bar_plot <- plot_ly(x = names(delivery_counts), y = delivery_counts, type = "bar",
+                    marker = list(color = "salmon"), 
+                    text = paste("Count: ", delivery_counts),
+                    hoverinfo = "text") %>%
+  layout(title = "Counts of Delivering Now", xaxis = list(title = "Delivering Now"), yaxis = list(title = "Count"))
+
+# Show plot
+bar_plot
+
+```
+
+```{r stacked_bar, echo=TRUE}
+library(ggplot2)
+
+# Convert categorical variables to factors
+df$Has_Online_delivery <- factor(df$Has_Online_delivery, levels = c("Yes", "No"))
+df$Has_Table_booking <- factor(df$Has_Table_booking, levels = c("Yes", "No"))
+
+# Create stacked bar chart
+ggplot(df, aes(x = City, fill = Has_Online_delivery)) +
+  geom_bar(position = "stack") +
+  labs(title = "Distribution of Online Delivery by City", x = "City", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+## Correlation Matrix
+
+```{r correl_matrix, echo=TRUE}
+correlation_matrix <- cor(df[c("Average_Cost_for_two", "Aggregate_rating", "Votes")])
+print(correlation_matrix)
+
+
+```
+
+## Box Plot
+
+```{r box_Aggregate_Ratings_Across_Cities, echo=TRUE}
+library(plotly)
+library(dplyr)
+
+# Select top 10 cities
+top_10_cities <- df %>%
+  count(City) %>%
+  arrange(desc(n)) %>%
+  slice(1:10) %>%
+  pull(City)
+
+# Filter the data for top 10 cities
+df_top_10 <- df %>%
+  filter(City %in% top_10_cities)
+
+# Create box plot using plotly
+box_plot <- plot_ly(df_top_10, x = ~City, y = ~Aggregate_rating, type = "box",
+                    marker = list(color = "navyblue"),
+                    text = paste("City: ", df_top_10$City, "<br>",
+                                 "Aggregate Rating: ", df_top_10$Aggregate_rating),
+                    hoverinfo = "text") %>%
+  layout(title = "Aggregate Ratings Across Top 10 Cities",
+         xaxis = list(title = "City"),
+         yaxis = list(title = "Aggregate Rating"))
+
+# Show plot
+box_plot
+
+
+```
+
+```{r box_Average_Cost_for_Two_Across Cities, echo=TRUE}
+library(dplyr)
+
+# Select top 10 cities
+top_10_cities <- df %>%
+  count(City) %>%
+  arrange(desc(n)) %>%
+  slice(1:10) %>%
+  pull(City)
+
+# Filter the data for top 10 cities
+df_top_10 <- df %>%
+  filter(City %in% top_10_cities)
+
+# Create box plot using plotly
+box_plot <- plot_ly(df_top_10, x = ~City, y = ~Average_Cost_for_two, type = "box",
+                    marker = list(color = "lightblue"),
+                    text = paste("City: ", df_top_10$City, "<br>",
+                                 "Average Cost: ", df_top_10$Average_Cost_for_two),
+                    hoverinfo = "text") %>%
+  layout(title = "Average Cost-for-two Across Top 10 Cities",
+         xaxis = list(title = "City"),
+         yaxis = list(title = "Average Cost"))
+
+# Show plot
+box_plot
+
+```
+
+## Pie Chart
+
+```{r pie, echo=TRUE}
+library(plotly)
+library(dplyr)
+library(tidyr)
+
+# Split cuisines into individual rows
+cuisine_df <- df %>%
+  separate_rows(Cuisines, sep = ", ") %>%
+  mutate(Cuisines = trimws(Cuisines)) %>%
+  count(Cuisines, sort = TRUE) %>%
+  top_n(10)  # Select top 10 cuisines based on counts
+
+# Create pie chart using plotly
+pie_chart <- plot_ly(labels = cuisine_df$Cuisines, values = cuisine_df$n, type = "pie",
+                      marker = list(colors = rainbow(length(cuisine_df$Cuisines))),
+                      textinfo = "percent+label") %>%
+  layout(title = "Top 10 Cuisines")
+
+# Show plot
+pie_chart
+
+
+
+```
+
+## Scatter Plot
+
+You can also embed plots, for example:
+
+```{r scatter, echo=TRUE}
+library(plotly)
+
+# Create scatter plot using plotly
+scatter_plot <- plot_ly(df, x = ~Votes, y = ~Aggregate_rating, type = "scatter", mode = "markers",
+                        marker = list(color = "blue"),
+                        text = paste("Votes: ", df$Votes, "<br>",
+                                     "Aggregate Rating: ", df$Aggregate_rating),
+                        hoverinfo = "text") %>%
+  layout(title = "Rating vs. Votes",
+         xaxis = list(title = "Votes"),
+         yaxis = list(title = "Aggregate Rating"))
+
+# Show plot
+scatter_plot
+
+```
+
+## Interactive Bubble Plot of Cuisine By Location (Latitude & Longitude)
+
+
+```{r bubble, echo=TRUE}
+library(plotly)
+
+# Extract latitude, longitude, and cuisines
+latitude <- df$Latitude
+longitude <- df$Longitude
+cuisines <- strsplit(df$Cuisines, ", ")
+
+# Create a data frame with latitude, longitude, and cuisines
+bubble_data <- data.frame(latitude = rep(latitude, sapply(cuisines, length)),
+                          longitude = rep(longitude, sapply(cuisines, length)),
+                          cuisine = unlist(cuisines))
+
+# Create hover text
+hover_text <- with(bubble_data, paste("Cuisine: ", cuisine, "<br>",
+                                      "Latitude: ", latitude, "<br>",
+                                      "Longitude: ", longitude))
+
+# Create bubble plot using plotly
+bubble_plot <- plot_ly(data = bubble_data, x = ~cuisine, y = ~latitude, z = ~longitude,
+                       type = "scatter3d", mode = "markers", size = ~latitude,
+                       text = hover_text,
+                       marker = list(symbol = "circle", sizemode = "diameter", opacity = 0.6))
+
+# Customize layout
+bubble_plot <- bubble_plot %>% layout(title = "Bubble Plot of Cuisine by Location",
+                                      scene = list(xaxis = list(title = "Cuisine"),
+                                                   yaxis = list(title = "Latitude"),
+                                                   zaxis = list(title = "Longitude")))
+
+# Show plot
+bubble_plot
+
+
+```
